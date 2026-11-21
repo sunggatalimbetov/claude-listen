@@ -273,6 +273,7 @@ def _main():
     ap.add_argument("--voice", help="ElevenLabs voice name or id for this run")
     ap.add_argument("--set-voice", metavar="NAME", help="save a default voice")
     ap.add_argument("--voices", action="store_true", help="list your ElevenLabs voices")
+    ap.add_argument("--install", action="store_true", help="add the /listen command to Claude Code and the iTerm pane profile")
     ap.add_argument("--local", action="store_true", help="use local Kokoro instead of ElevenLabs")
     ap.add_argument("--session", help="Claude Code session id to read (default: the current one)")
     ap.add_argument("--pane", action="store_true", help=argparse.SUPPRESS)
@@ -280,6 +281,11 @@ def _main():
     ap.add_argument("--print", action="store_true", help="print the text that would be read, then exit")
     args = ap.parse_args()
 
+    if args.install:
+        from .install import install
+
+        install()
+        return
     cfg = load_config()
     if args.voices:
         for v in list_voices():

@@ -12,9 +12,7 @@ Listen to your latest Claude Code reply instead of reading it. Each word is high
 ## Install
 
 ```
-git clone https://github.com/sunggatalimbetov/claude-listen
-cd claude-listen
-uv tool install .
+uv tool install claude-listen      # or: pipx install claude-listen
 ```
 
 Add your ElevenLabs API key (Text to Speech access is enough, plus Voices read for `--voices`):
@@ -44,7 +42,7 @@ Keys: `space` pause, `←/→` previous/next paragraph, `+/-` speed, `q` quit.
 ### `/listen` in Claude Code (iTerm2)
 
 ```
-uv run scripts/install_iterm.py   # from the cloned repo
+listen --install
 ```
 
 Then type `/listen` in any Claude Code session. A pane opens below, reads that session's last reply and closes when it finishes. `! listen` does the same without a model turn.
@@ -59,7 +57,7 @@ Then type `/listen` in any Claude Code session. A pane opens below, reads that s
 ### Local voice (Kokoro)
 
 ```
-uv tool install ".[local]"
+uv tool install "claude-listen[local]"
 ```
 
 Put `kokoro-v1.0.onnx` and `voices-v1.0.bin` from the [kokoro-onnx releases](https://github.com/thewh1teagle/kokoro-onnx/releases) in `~/.cache/speak/kokoro/`. Highlighting with Kokoro is estimated, not exact.

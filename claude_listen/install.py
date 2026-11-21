@@ -1,12 +1,9 @@
-# /// script
-# requires-python = ">=3.11"
-# ///
 """Set up `/listen` for Claude Code in iTerm2.
 
 - Adds an iTerm2 profile "Listen" used for the reading pane (closes when done).
 - Adds a Claude Code slash command `/listen` (~/.claude/commands/listen.md).
 
-Run with: uv run scripts/install_iterm.py
+Run with: listen --install
 """
 
 import json
@@ -27,7 +24,7 @@ Reply with only the word: ok
 """
 
 
-def main():
+def install():
     if not shutil.which("listen"):
         sys.exit("`listen` is not on PATH. Install it first: uv tool install claude-listen")
     PROFILES.mkdir(parents=True, exist_ok=True)
@@ -35,7 +32,4 @@ def main():
     (PROFILES / "claude-listen.json").write_text(json.dumps({"Profiles": [profile]}, indent=2))
     COMMAND.parent.mkdir(parents=True, exist_ok=True)
     COMMAND.write_text(COMMAND_BODY)
-    print("Done. Type /listen in Claude Code.")
-
-
-main()
+    print("Done. Type /listen in Claude Code (restart open sessions to pick it up).")

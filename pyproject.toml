@@ -5,17 +5,30 @@ description = "Listen to your latest Claude Code reply, with each word highlight
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
+authors = [{ name = "Sunggat Alimbetov" }]
+keywords = ["claude", "claude-code", "text-to-speech", "tts", "elevenlabs", "iterm2", "accessibility"]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Intended Audience :: Developers",
+]
 dependencies = ["rich>=13"]
+
+[project.urls]
+Homepage = "https://github.com/sunggatalimbetov/claude-listen"
+Issues = "https://github.com/sunggatalimbetov/claude-listen/issues"
 
 [project.optional-dependencies]
 local = ["kokoro-onnx>=0.4", "numpy"]
 
 [project.scripts]
-listen = "speak.cli:main"
+listen = "claude_listen.cli:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["speak"]
+packages = ["claude_listen"]
