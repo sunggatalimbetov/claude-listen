@@ -1,0 +1,14 @@
+{
+  "name": "listen-aloud",
+  "description": "Listen to Claude's replies instead of reading them",
+  "owner": {
+    "name": "Sunggat Alimbetov"
+  },
+  "plugins": [
+    {
+      "name": "listen-aloud",
+      "source": "./",
+      "description": "/listen reads Claude's last reply aloud with word highlighting"
+    }
+  ]
+}

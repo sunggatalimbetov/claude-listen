@@ -1,6 +1,6 @@
 [project]
 name = "claude-listen"
-version = "0.1.0"
+version = "0.1.1"
 description = "Listen to your latest Claude Code reply, with each word highlighted as it is spoken"
 readme = "README.md"
 license = "MIT"

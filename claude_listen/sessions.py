@@ -3,6 +3,7 @@
 import json
 import os
 import shlex
+import sys
 import subprocess
 from pathlib import Path
 
@@ -55,7 +56,11 @@ def open_pane(text: str) -> bool:
     fd, path = tempfile.mkstemp(prefix="listen-", suffix=".md")
     with os.fdopen(fd, "w") as f:
         f.write(text)
-    exe = subprocess.run(["/bin/sh", "-c", "command -v listen"], capture_output=True, text=True).stdout.strip() or "listen"
+    from .install import ensure_profile
+
+    ensure_profile()
+    # Use this very executable, so it also works when run through uvx.
+    exe = os.path.abspath(sys.argv[0]) if os.path.isfile(sys.argv[0]) else "listen"
     cmd = f"{shlex.quote(exe)} --pane --snapshot {shlex.quote(path)}"
     applescript_cmd = cmd.replace("\\", "\\\\").replace('"', '\\"')
     for profile in ('profile "Listen"', "default profile"):

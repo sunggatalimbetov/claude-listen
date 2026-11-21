@@ -11,11 +11,27 @@ Listen to your latest Claude Code reply instead of reading it. Each word is high
 
 ## Install
 
+### As a Claude Code plugin (easiest)
+
+Needs [uv](https://docs.astral.sh/uv/) and iTerm2.
+
 ```
-uv tool install claude-listen      # or: pipx install claude-listen
+/plugin marketplace add sunggatalimbetov/claude-listen
+/plugin install listen-aloud@listen-aloud
 ```
 
-Add your ElevenLabs API key (Text to Speech access is enough, plus Voices read for `--voices`):
+Then type `/listen` in any session.
+
+### As a CLI
+
+```
+uv tool install claude-listen      # or: pipx install claude-listen
+listen --install                   # adds /listen to Claude Code
+```
+
+### API key
+
+Create an ElevenLabs key with Text to Speech access (plus Voices read for `--voices`):
 
 ```
 mkdir -p ~/.config/speak
@@ -41,11 +57,7 @@ Keys: `space` pause, `←/→` previous/next paragraph, `+/-` speed, `q` quit.
 
 ### `/listen` in Claude Code (iTerm2)
 
-```
-listen --install
-```
-
-Then type `/listen` in any Claude Code session. A pane opens below, reads that session's last reply and closes when it finishes. `! listen` does the same without a model turn.
+Type `/listen` in any Claude Code session. A pane opens below, reads that session's last reply and closes when it finishes. `! listen` does the same without a model turn.
 
 ### Which session is read
 
