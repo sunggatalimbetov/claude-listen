@@ -39,20 +39,18 @@ listen --local         # Kokoro, offline
 
 Keys: `space` pause, `←/→` previous/next paragraph, `+/-` speed, `q` quit.
 
-### iTerm hotkey
-
-Enable iTerm's Python API (Settings > General > Magic), then run:
+### `/listen` in Claude Code (iTerm2)
 
 ```
 uv run scripts/install_iterm.py
 ```
 
-Cmd+Shift+L then opens a pane below the current one that reads the latest reply and closes when it finishes.
+Then type `/listen` in any Claude Code session. A pane opens below, reads that session's last reply and closes when it finishes. `! listen` does the same without a model turn.
 
 ### Which session is read
 
 1. `--session <id>` if given
-2. Inside Claude Code (`! listen`): that session, via `CLAUDE_CODE_SESSION_ID`
+2. Inside Claude Code (`/listen` or `! listen`): that session, via `CLAUDE_CODE_SESSION_ID`
 3. In iTerm: the Claude pane in the current tab (matched by tty through `~/.claude/sessions`)
 4. Otherwise: the session that replied most recently
 

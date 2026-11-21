@@ -272,6 +272,7 @@ def _main():
     ap.add_argument("--local", action="store_true", help="use local Kokoro instead of ElevenLabs")
     ap.add_argument("--session", help="Claude Code session id to read (default: the current one)")
     ap.add_argument("--pane", action="store_true", help=argparse.SUPPRESS)
+    ap.add_argument("--snapshot", help=argparse.SUPPRESS)
     ap.add_argument("--print", action="store_true", help="print the text that would be read, then exit")
     args = ap.parse_args()
 
@@ -289,16 +290,19 @@ def _main():
 
     mode = os.fstat(sys.stdin.fileno()).st_mode
     piped = (stat.S_ISFIFO(mode) or stat.S_ISREG(mode)) and not os.environ.get("CLAUDE_CODE_SESSION_ID")
-    if args.file == "-" or (args.file is None and piped):
+    if args.file == "-" or (args.file is None and not args.snapshot and piped):
         md = sys.stdin.read()
         sys.stdin = open("/dev/tty")
+    elif args.snapshot:
+        md = Path(args.snapshot).read_text()
+        Path(args.snapshot).unlink(missing_ok=True)
     elif args.file:
         md = Path(args.file).read_text()
     else:
         session = args.session or current_session()
         if not args.print and not sys.stdout.isatty() and os.environ.get("CLAUDE_CODE_SESSION_ID"):
             # Run from inside Claude Code (`! listen`): there is no screen here, so open a pane.
-            if open_pane(session):
+            if open_pane(last_reply(session)):
                 print("Listening in a pane below.")
                 return
             sys.exit("Could not open an iTerm pane. Run `listen` in a terminal instead.")

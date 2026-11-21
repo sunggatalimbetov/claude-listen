@@ -44,13 +44,21 @@ def current_session() -> str | None:
     return max(matches, key=lambda s: s.get("updatedAt", 0))["sessionId"]
 
 
-def open_pane(session_id: str) -> bool:
-    """Open an iTerm split pane under the current one that runs `listen --session`."""
+def open_pane(text: str) -> bool:
+    """Open an iTerm split pane under the current one that reads `text`.
+
+    The text is snapshotted now, so the reply Claude writes after `/listen` is not mixed in.
+    """
+    import tempfile
+
+    fd, path = tempfile.mkstemp(prefix="listen-", suffix=".md")
+    with os.fdopen(fd, "w") as f:
+        f.write(text)
     exe = subprocess.run(["/bin/sh", "-c", "command -v listen"], capture_output=True, text=True).stdout.strip() or "listen"
-    cmd = f"{exe} --session {session_id}"
-    script = f'tell application "iTerm2" to tell current session of current window to split horizontally with profile "Listen" command "{cmd}"'
-    res = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
-    if res.returncode != 0:
-        script = f'tell application "iTerm2" to tell current session of current window to split horizontally with default profile command "{cmd}"'
-        res = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
-    return res.returncode == 0
+    cmd = f"{exe} --pane --snapshot {path}"
+    for profile in ('profile "Listen"', "default profile"):
+        script = f'tell application "iTerm2" to tell current session of current window to split horizontally with {profile} command "{cmd}"'
+        if subprocess.run(["osascript", "-e", script], capture_output=True, text=True).returncode == 0:
+            return True
+    os.unlink(path)
+    return False

@@ -1,11 +1,12 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["iterm2"]
 # ///
-"""Add an iTerm2 hotkey (Cmd+Shift+L) that opens a split pane running `listen`.
+"""Set up `/listen` for Claude Code in iTerm2.
+
+- Adds an iTerm2 profile "Listen" used for the reading pane (closes when done).
+- Adds a Claude Code slash command `/listen` (~/.claude/commands/listen.md).
 
 Run with: uv run scripts/install_iterm.py
-Needs iTerm2's Python API enabled (Settings > General > Magic > Enable Python API).
 """
 
 import json
@@ -13,49 +14,28 @@ import shutil
 import sys
 from pathlib import Path
 
-import iterm2
-from iterm2.binding import (
-    BindingAction,
-    KeyBinding,
-    async_get_global_key_bindings,
-    async_set_global_key_bindings,
-)
-from iterm2.keyboard import Keycode, Modifier
-
-GUID = "claude-listen-pane"
 PROFILES = Path.home() / "Library" / "Application Support" / "iTerm2" / "DynamicProfiles"
+COMMAND = Path.home() / ".claude" / "commands" / "listen.md"
+
+COMMAND_BODY = """---
+description: Listen to Claude's last reply (opens a pane with word highlighting)
+allowed-tools: Bash(listen:*)
+---
+!`listen`
+
+Reply with only the word: ok
+"""
 
 
-def write_profile():
-    exe = shutil.which("listen")
-    if not exe:
+def main():
+    if not shutil.which("listen"):
         sys.exit("`listen` is not on PATH. Install it first: uv tool install claude-listen")
     PROFILES.mkdir(parents=True, exist_ok=True)
-    profile = {
-        "Name": "Listen",
-        "Guid": GUID,
-        "Custom Command": "Yes",
-        "Command": f"{exe} --pane",
-        "Close Sessions On End": True,
-        "Prompt Before Closing 2": 0,
-    }
+    profile = {"Name": "Listen", "Guid": "claude-listen-pane", "Close Sessions On End": True, "Prompt Before Closing 2": 0}
     (PROFILES / "claude-listen.json").write_text(json.dumps({"Profiles": [profile]}, indent=2))
+    COMMAND.parent.mkdir(parents=True, exist_ok=True)
+    COMMAND.write_text(COMMAND_BODY)
+    print("Done. Type /listen in Claude Code.")
 
 
-async def main(connection):
-    write_profile()
-    try:
-        existing = await async_get_global_key_bindings(connection)
-    except TypeError:  # no global bindings yet
-        existing = []
-    bindings = [b for b in existing if b.action != BindingAction.SPLIT_HORIZONTALLY_WITH_PROFILE or b.param != GUID]
-    # iTerm may report Shift+L as "L" or "l" depending on version, so bind both.
-    for ch in ("L", "l"):
-        bindings.append(
-            KeyBinding(ord(ch), [Modifier.COMMAND, Modifier.SHIFT], Keycode.ANSI_L, BindingAction.SPLIT_HORIZONTALLY_WITH_PROFILE, GUID, None, None)
-        )
-    await async_set_global_key_bindings(connection, bindings)
-    print("Done. Press Cmd+Shift+L in iTerm to listen to the latest Claude reply.")
-
-
-iterm2.run_until_complete(main)
+main()
