@@ -2,7 +2,7 @@
 
 Listen to your latest Claude Code reply instead of reading it. Each word is highlighted in the terminal as it is spoken.
 
-- Reads the last reply from your most recent Claude Code session (`~/.claude/projects`)
+- Reads the last reply of the Claude Code session you are in, even with many sessions open
 - ElevenLabs voices (default model `eleven_v4`), with per-character timestamps for exact highlighting
 - Generates paragraph by paragraph, so audio starts in about a second
 - Code blocks are shown, not read: playback pauses 5 seconds so you can look at them
@@ -28,7 +28,8 @@ Or export `ELEVENLABS_API_KEY`.
 ## Use
 
 ```
-listen                 # read the latest Claude reply
+listen                 # read the latest reply (Claude pane in this iTerm tab)
+! listen               # typed inside Claude Code: opens a pane reading this session
 listen notes.md        # read a file
 pbpaste | listen       # read the clipboard
 listen --voices        # list voices
@@ -48,7 +49,12 @@ uv run scripts/install_iterm.py
 
 Cmd+Shift+L then opens a pane below the current one that reads the latest reply and closes when it finishes.
 
-If you run several Claude sessions at once, `listen` reads the one that replied most recently.
+### Which session is read
+
+1. `--session <id>` if given
+2. Inside Claude Code (`! listen`): that session, via `CLAUDE_CODE_SESSION_ID`
+3. In iTerm: the Claude pane in the current tab (matched by tty through `~/.claude/sessions`)
+4. Otherwise: the session that replied most recently
 
 ### Local voice (Kokoro)
 

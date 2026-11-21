@@ -6,8 +6,9 @@ from pathlib import Path
 PROJECTS = Path.home() / ".claude" / "projects"
 
 
-def _latest_transcript() -> Path | None:
-    files = [p for p in PROJECTS.glob("*/*.jsonl") if p.is_file()]
+def transcript_path(session_id: str | None = None) -> Path | None:
+    pattern = f"*/{session_id}.jsonl" if session_id else "*/*.jsonl"
+    files = [p for p in PROJECTS.glob(pattern) if p.is_file()]
     return max(files, key=lambda p: p.stat().st_mtime, default=None)
 
 
@@ -23,8 +24,8 @@ def _is_real_prompt(entry: dict) -> bool:
     return False
 
 
-def last_reply() -> str:
-    path = _latest_transcript()
+def last_reply(session_id: str | None = None) -> str:
+    path = transcript_path(session_id)
     if path is None:
         return ""
     entries = []
@@ -33,15 +34,18 @@ def last_reply() -> str:
             entries.append(json.loads(line))
         except json.JSONDecodeError:
             continue
-    start = 0
-    for i, e in enumerate(entries):
+    groups: list[list[str]] = [[]]
+    for e in entries:
         if _is_real_prompt(e):
-            start = i + 1
-    parts = []
-    for e in entries[start:]:
+            groups.append([])
+            continue
         if e.get("type") != "assistant" or e.get("isSidechain"):
             continue
         content = (e.get("message") or {}).get("content")
         if isinstance(content, list):
-            parts += [b["text"] for b in content if b.get("type") == "text" and b.get("text", "").strip()]
-    return "\n\n".join(parts)
+            groups[-1] += [b["text"] for b in content if b.get("type") == "text" and b.get("text", "").strip()]
+    # The newest reply, or the one before it if Claude is still writing.
+    for parts in reversed(groups):
+        if parts:
+            return "\n\n".join(parts)
+    return ""
