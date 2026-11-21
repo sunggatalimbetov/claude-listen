@@ -30,8 +30,9 @@ def _api_key() -> str:
         return key
     if KEY_FILE.exists():
         for line in KEY_FILE.read_text().splitlines():
+            line = line.strip().removeprefix("export ").strip()
             if line.startswith("ELEVENLABS_API_KEY="):
-                return line.split("=", 1)[1].strip()
+                return line.split("=", 1)[1].strip().strip("'\"")
     raise RuntimeError(f"Set ELEVENLABS_API_KEY or put it in {KEY_FILE}")
 
 
@@ -39,11 +40,16 @@ def _cached(kind: str, parts: list[str], make) -> Audio:
     digest = hashlib.sha256("\x00".join([kind, *parts]).encode()).hexdigest()[:32]
     pcm_path, meta_path = CACHE / f"{digest}.pcm", CACHE / f"{digest}.json"
     if pcm_path.exists() and meta_path.exists():
-        return Audio(pcm_path.read_bytes(), json.loads(meta_path.read_text()))
+        try:
+            return Audio(pcm_path.read_bytes(), json.loads(meta_path.read_text()))
+        except (OSError, ValueError):
+            pass
     audio = make()
-    CACHE.mkdir(parents=True, exist_ok=True)
-    pcm_path.write_bytes(audio.pcm)
-    meta_path.write_text(json.dumps(audio.starts))
+    CACHE.mkdir(mode=0o700, parents=True, exist_ok=True)
+    for path, data in ((pcm_path, audio.pcm), (meta_path, json.dumps(audio.starts).encode())):
+        tmp = path.with_suffix(path.suffix + ".tmp")
+        tmp.write_bytes(data)
+        os.replace(tmp, path)
     return audio
 
 

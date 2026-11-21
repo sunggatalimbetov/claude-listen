@@ -224,7 +224,7 @@ def run(chunks: list[Chunk], synth):
         with Live(s.render(console.height), console=console, screen=True, auto_refresh=False) as live:
             while True:
                 key = read_key(1 / 30)
-                if key in ("q", "Q", "\x1b"):
+                if key in ("q", "Q"):
                     break
                 if key == " ":
                     s.toggle_pause()
@@ -241,10 +241,14 @@ def run(chunks: list[Chunk], synth):
                     if time.monotonic() - end_at > 1.0:
                         break
                 live.update(s.render(console.height), refresh=True)
+    except KeyboardInterrupt:
+        pass
     finally:
-        s.player.stop()
+        s.player.close()
         s.pool.shutdown(wait=False, cancel_futures=True)
         termios.tcsetattr(fd, termios.TCSADRAIN, old)
+    if s.error:
+        sys.exit(f"Some parts could not be read: {s.error}")
 
 
 def main():
@@ -315,6 +319,11 @@ def _main():
             print(("[code]\n" + c.text) if c.code else c.prefix + c.text)
         return
 
+    if not args.local:
+        try:
+            tts._api_key()
+        except RuntimeError as e:
+            sys.exit(str(e))
     if args.local:
         synth = lambda text, **_: tts.kokoro(text)  # noqa: E731
     else:

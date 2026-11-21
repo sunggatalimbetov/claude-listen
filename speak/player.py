@@ -1,6 +1,7 @@
 """Plays PCM through afplay. Seek, pause and speed work by restarting afplay from a sample offset."""
 
 import os
+import shutil
 import subprocess
 import tempfile
 import time
@@ -18,6 +19,7 @@ class Player:
         self.rate = 1.0
         self.paused = False
         self._tmp = tempfile.mkdtemp(prefix="speak-")
+        self._wav: str | None = None
 
     def position(self) -> float:
         if self.audio is None:
@@ -27,7 +29,7 @@ class Player:
         return min(self.offset + (time.monotonic() - self.started) * self.rate, self.audio.duration)
 
     def done(self) -> bool:
-        return self.audio is not None and not self.paused and self.position() >= self.audio.duration
+        return self.audio is not None and not self.paused and (self.proc is None or self.proc.poll() is not None)
 
     def play(self, audio: Audio, at: float = 0.0):
         self.stop()
@@ -39,6 +41,7 @@ class Player:
             w.setsampwidth(2)
             w.setframerate(RATE)
             w.writeframes(audio.pcm[start:])
+        self._wav = path
         self.proc = subprocess.Popen(
             ["afplay", "-r", f"{self.rate:.2f}", "-q", "1", path],
             stdout=subprocess.DEVNULL,
@@ -51,6 +54,16 @@ class Player:
             self.proc.kill()
             self.proc.wait()
         self.proc = None
+        if self._wav:
+            try:
+                os.unlink(self._wav)
+            except OSError:
+                pass
+            self._wav = None
+
+    def close(self):
+        self.stop()
+        shutil.rmtree(self._tmp, ignore_errors=True)
 
     def toggle_pause(self):
         if self.audio is None:

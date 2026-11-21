@@ -2,6 +2,7 @@
 
 import json
 import os
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -55,9 +56,10 @@ def open_pane(text: str) -> bool:
     with os.fdopen(fd, "w") as f:
         f.write(text)
     exe = subprocess.run(["/bin/sh", "-c", "command -v listen"], capture_output=True, text=True).stdout.strip() or "listen"
-    cmd = f"{exe} --pane --snapshot {path}"
+    cmd = f"{shlex.quote(exe)} --pane --snapshot {shlex.quote(path)}"
+    applescript_cmd = cmd.replace("\\", "\\\\").replace('"', '\\"')
     for profile in ('profile "Listen"', "default profile"):
-        script = f'tell application "iTerm2" to tell current session of current window to split horizontally with {profile} command "{cmd}"'
+        script = f'tell application "iTerm2" to tell current session of current window to split horizontally with {profile} command "{applescript_cmd}"'
         if subprocess.run(["osascript", "-e", script], capture_output=True, text=True).returncode == 0:
             return True
     os.unlink(path)

@@ -65,11 +65,12 @@ def parse(md: str) -> list[Chunk]:
     while i < len(lines):
         line = lines[i]
         stripped = line.strip()
-        if stripped.startswith("```"):
+        if stripped.startswith(("```", "~~~")):
+            fence = stripped[:3]
             flush()
             body = []
             i += 1
-            while i < len(lines) and not lines[i].strip().startswith("```"):
+            while i < len(lines) and not lines[i].strip().startswith(fence):
                 body.append(lines[i])
                 i += 1
             if body:
