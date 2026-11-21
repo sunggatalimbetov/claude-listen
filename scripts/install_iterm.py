@@ -35,7 +35,7 @@ def write_profile():
         "Name": "Listen",
         "Guid": GUID,
         "Custom Command": "Yes",
-        "Command": exe,
+        "Command": f"{exe} --pane",
         "Close Sessions On End": True,
         "Prompt Before Closing 2": 0,
     }
@@ -49,9 +49,11 @@ async def main(connection):
     except TypeError:  # no global bindings yet
         existing = []
     bindings = [b for b in existing if b.action != BindingAction.SPLIT_HORIZONTALLY_WITH_PROFILE or b.param != GUID]
-    bindings.append(
-        KeyBinding(ord("l"), [Modifier.COMMAND, Modifier.SHIFT], Keycode.ANSI_L, BindingAction.SPLIT_HORIZONTALLY_WITH_PROFILE, GUID, None, None)
-    )
+    # iTerm may report Shift+L as "L" or "l" depending on version, so bind both.
+    for ch in ("L", "l"):
+        bindings.append(
+            KeyBinding(ord(ch), [Modifier.COMMAND, Modifier.SHIFT], Keycode.ANSI_L, BindingAction.SPLIT_HORIZONTALLY_WITH_PROFILE, GUID, None, None)
+        )
     await async_set_global_key_bindings(connection, bindings)
     print("Done. Press Cmd+Shift+L in iTerm to listen to the latest Claude reply.")
 

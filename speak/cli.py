@@ -248,6 +248,22 @@ def run(chunks: list[Chunk], synth):
 
 
 def main():
+    try:
+        _main()
+    except SystemExit as e:
+        if "--pane" in sys.argv and e.code not in (0, None):
+            if isinstance(e.code, str):
+                print(e.code)
+            input("\nPress Enter to close.")
+        raise
+    except Exception as e:
+        if "--pane" not in sys.argv:
+            raise
+        print(f"listen failed: {e}")
+        input("\nPress Enter to close.")
+
+
+def _main():
     ap = argparse.ArgumentParser(prog="listen", description="Read the latest Claude Code reply aloud with word highlighting.")
     ap.add_argument("file", nargs="?", help="read this file instead ('-' for stdin)")
     ap.add_argument("--voice", help="ElevenLabs voice name or id for this run")
@@ -255,6 +271,7 @@ def main():
     ap.add_argument("--voices", action="store_true", help="list your ElevenLabs voices")
     ap.add_argument("--local", action="store_true", help="use local Kokoro instead of ElevenLabs")
     ap.add_argument("--session", help="Claude Code session id to read (default: the current one)")
+    ap.add_argument("--pane", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--print", action="store_true", help="print the text that would be read, then exit")
     args = ap.parse_args()
 
