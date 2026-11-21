@@ -1,0 +1,21 @@
+[project]
+name = "claude-listen"
+version = "0.1.0"
+description = "Listen to your latest Claude Code reply, with each word highlighted as it is spoken"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = ["rich>=13"]
+
+[project.optional-dependencies]
+local = ["kokoro-onnx>=0.4", "numpy"]
+
+[project.scripts]
+listen = "speak.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["speak"]
