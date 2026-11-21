@@ -2,12 +2,16 @@
 
 Listen to your latest Claude Code reply instead of reading it. Each word is highlighted in the terminal as it is spoken.
 
+![listen demo](assets/demo.gif)
+
+[▶ Watch the demo with sound](https://github.com/sunggatalimbetov/claude-listen/raw/main/assets/demo.mp4)
+
 - Reads the last reply of the Claude Code session you are in, even with many sessions open
 - ElevenLabs voices (default model `eleven_v4`), with per-character timestamps for exact highlighting
 - Generates paragraph by paragraph, so audio starts in about a second
 - Code blocks are shown, not read: playback pauses 5 seconds so you can look at them
 - Optional free, offline voice with Kokoro (`--local`)
-- macOS (uses `afplay`)
+- macOS (plays through AVFoundation, so the highlight follows the exact audio position)
 
 ## Install
 

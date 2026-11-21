@@ -1,6 +1,6 @@
 {
   "name": "listen-aloud",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "/listen reads Claude's last reply aloud in an iTerm pane, highlighting each word as it is spoken (ElevenLabs v4)",
   "author": { "name": "Sunggat Alimbetov" },
   "homepage": "https://github.com/sunggatalimbetov/claude-listen",

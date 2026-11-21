@@ -1,82 +1,71 @@
-"""Plays PCM through afplay. Seek, pause and speed work by restarting afplay from a sample offset."""
+"""Plays PCM through macOS AVAudioPlayer, which reports the exact playback position,
+pauses instantly and changes speed without changing pitch."""
 
-import os
-import shutil
-import subprocess
-import tempfile
-import time
+import io
 import wave
+
+from AVFoundation import AVAudioPlayer
+from Foundation import NSData
 
 from .tts import RATE, Audio
 
 
+def _wav_bytes(pcm: bytes) -> bytes:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(RATE)
+        w.writeframes(pcm)
+    return buf.getvalue()
+
+
 class Player:
     def __init__(self):
-        self.proc: subprocess.Popen | None = None
         self.audio: Audio | None = None
-        self.offset = 0.0
-        self.started = 0.0
+        self._player = None
         self.rate = 1.0
         self.paused = False
-        self._tmp = tempfile.mkdtemp(prefix="speak-")
-        self._wav: str | None = None
 
     def position(self) -> float:
-        if self.audio is None:
-            return 0.0
-        if self.paused or self.proc is None:
-            return self.offset
-        return min(self.offset + (time.monotonic() - self.started) * self.rate, self.audio.duration)
+        return float(self._player.currentTime()) if self._player is not None else 0.0
 
     def done(self) -> bool:
-        return self.audio is not None and not self.paused and (self.proc is None or self.proc.poll() is not None)
+        return self._player is not None and not self.paused and not self._player.isPlaying()
 
     def play(self, audio: Audio, at: float = 0.0):
         self.stop()
-        self.audio, self.offset, self.paused = audio, at, False
-        start = int(at * RATE) * 2
-        path = os.path.join(self._tmp, f"{time.monotonic_ns()}.wav")
-        with wave.open(path, "wb") as w:
-            w.setnchannels(1)
-            w.setsampwidth(2)
-            w.setframerate(RATE)
-            w.writeframes(audio.pcm[start:])
-        self._wav = path
-        self.proc = subprocess.Popen(
-            ["afplay", "-r", f"{self.rate:.2f}", "-q", "1", path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-        self.started = time.monotonic()
+        data = _wav_bytes(audio.pcm)
+        player, err = AVAudioPlayer.alloc().initWithData_error_(NSData.dataWithBytes_length_(data, len(data)), None)
+        if player is None:
+            raise RuntimeError(f"Could not play audio: {err}")
+        player.setEnableRate_(True)
+        player.setRate_(self.rate)
+        player.setCurrentTime_(at)
+        player.prepareToPlay()
+        player.play()
+        self.audio, self._player, self.paused = audio, player, False
 
     def stop(self):
-        if self.proc and self.proc.poll() is None:
-            self.proc.kill()
-            self.proc.wait()
-        self.proc = None
-        if self._wav:
-            try:
-                os.unlink(self._wav)
-            except OSError:
-                pass
-            self._wav = None
+        if self._player is not None:
+            self._player.stop()
+        self._player = None
+        self.audio = None
+        self.paused = False
 
     def close(self):
         self.stop()
-        shutil.rmtree(self._tmp, ignore_errors=True)
 
     def toggle_pause(self):
-        if self.audio is None:
+        if self._player is None:
             return
         if self.paused:
-            self.play(self.audio, self.offset)
+            self._player.play()
         else:
-            self.offset = self.position()
-            self.stop()
-            self.paused = True
+            self._player.pause()
+        self.paused = not self.paused
 
     def set_rate(self, rate: float):
-        pos = self.position()
-        self.rate = max(0.5, min(2.5, round(rate, 2)))
-        if self.audio and not self.paused:
-            self.play(self.audio, pos)
+        self.rate = max(0.5, min(2.0, round(rate, 2)))
+        if self._player is not None:
+            self._player.setRate_(self.rate)
